@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Task - To-Do App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-container small-container">
+        <header class="app-header">
+            <h1>Edit Task</h1>
+            <p class="subtitle">Modify task details, priority, or due date</p>
+        </header>
+
+        <div class="card form-card">
+            <form method="POST" action="/edit/{{ task['id'] }}" class="edit-form">
+                <div class="form-group-block">
+                    <label for="task-name">Task Description</label>
+                    <input type="text" id="task-name" name="task" value="{{ task['task'] }}" required class="form-control">
+                </div>
+
+                <div class="form-group-block">
+                    <label for="priority-select">Priority Level</label>
+                    <select id="priority-select" name="priority" class="form-control priority-select">
+                        <option value="High" {% if task['priority'] == 'High' %}selected{% endif %}>High Priority</option>
+                        <option value="Medium" {% if (not task['priority']) or task['priority'] == 'Medium' %}selected{% endif %}>Medium Priority</option>
+                        <option value="Low" {% if task['priority'] == 'Low' %}selected{% endif %}>Low Priority</option>
+                    </select>
+                </div>
+
+                <div class="form-group-block">
+                    <label for="due-date">Due Date</label>
+                    <input type="date" id="due-date" name="due_date" value="{{ task['due_date'] or '' }}" class="form-control">
+                </div>
+
+                <div class="form-actions-row">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <a href="/" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>

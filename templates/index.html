@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>My Task Dashboard</h1>
+            <p class="subtitle">Organize, track, and accomplish your daily tasks</p>
+        </header>
+
+        <!-- Dashboard Statistics -->
+        <div class="stats-grid">
+            <a href="/?filter=all" class="stat-card {% if current_filter == 'all' %}active-stat{% endif %}">
+                <span class="stat-value">{{ stats.total }}</span>
+                <span class="stat-label">Total Tasks</span>
+            </a>
+            <a href="/?filter=active" class="stat-card {% if current_filter == 'active' %}active-stat{% endif %}">
+                <span class="stat-value active-val">{{ stats.active }}</span>
+                <span class="stat-label">Active</span>
+            </a>
+            <a href="/?filter=completed" class="stat-card {% if current_filter == 'completed' %}active-stat{% endif %}">
+                <span class="stat-value completed-val">{{ stats.completed }}</span>
+                <span class="stat-label">Completed</span>
+            </a>
+            <a href="/?filter=high" class="stat-card {% if current_filter == 'high' %}active-stat{% endif %}">
+                <span class="stat-value high-val">{{ stats.high_priority }}</span>
+                <span class="stat-label">High Priority</span>
+            </a>
+            <a href="/?filter=overdue" class="stat-card {% if current_filter == 'overdue' %}active-stat{% endif %}">
+                <span class="stat-value overdue-val">{{ stats.overdue }}</span>
+                <span class="stat-label">Overdue</span>
+            </a>
+        </div>
+
+        <!-- Add Task Form Card -->
+        <div class="card form-card">
+            <h2>Add New Task</h2>
+            <form method="POST" action="/" class="task-form">
+                <div class="form-group flex-2">
+                    <input type="text" name="task" placeholder="What needs to be done?" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <select name="priority" class="form-control priority-select">
+                        <option value="High">High Priority</option>
+                        <option value="Medium" selected>Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="date" name="due_date" class="form-control" title="Due Date">
+                </div>
+                <button type="submit" class="btn btn-primary">+ Add Task</button>
+            </form>
+        </div>
+
+        <!-- Search, Filter & Sort Toolbar -->
+        <div class="card toolbar-card">
+            <form method="GET" action="/" class="toolbar-form">
+                <div class="search-box">
+                    <input type="text" name="search" value="{{ search }}" placeholder="Search tasks..." class="form-control">
+                    {% if search %}
+                        <a href="/?filter={{ current_filter }}&sort={{ current_sort }}" class="clear-search" title="Clear Search">×</a>
+                    {% endif %}
+                </div>
+
+                <div class="filter-pills">
+                    <a href="/?filter=all{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'all' %}active{% endif %}">All</a>
+                    <a href="/?filter=active{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'active' %}active{% endif %}">Active</a>
+                    <a href="/?filter=completed{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'completed' %}active{% endif %}">Completed</a>
+                    <a href="/?filter=high{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'high' %}active{% endif %}">High</a>
+                    <a href="/?filter=medium{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'medium' %}active{% endif %}">Medium</a>
+                    <a href="/?filter=low{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'low' %}active{% endif %}">Low</a>
+                    <a href="/?filter=overdue{% if search %}&search={{ search }}{% endif %}&sort={{ current_sort }}" class="pill {% if current_filter == 'overdue' %}active{% endif %}">Overdue</a>
+                </div>
+
+                <div class="sort-box">
+                    <label for="sort-select">Sort by:</label>
+                    <select id="sort-select" name="sort" class="form-control sort-select" onchange="this.form.submit()">
+                        <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+                        <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                        <option value="priority" {% if current_sort == 'priority' %}selected{% endif %}>Priority</option>
+                        <option value="due_date" {% if current_sort == 'due_date' %}selected{% endif %}>Due Date</option>
+                    </select>
+                    <input type="hidden" name="filter" value="{{ current_filter }}">
+                </div>
+            </form>
+        </div>
+
+        <!-- Task List -->
+        {% if tasks %}
+            <ul class="task-list">
+                {% for task in tasks %}
+                    <li class="task-item {% if task['completed'] %}is-completed{% endif %}">
+                        <a href="/toggle/{{ task['id'] }}" class="toggle-btn {% if task['completed'] %}done{% endif %}" title="{% if task['completed'] %}Mark Active{% else %}Mark Completed{% endif %}">
+                            {% if task['completed'] %}✓{% else %}{% endif %}
+                        </a>
+
+                        <div class="task-details">
+                            <span class="task-title {% if task['completed'] %}completed-text{% endif %}">
+                                {{ task["task"] }}
+                            </span>
+                            
+                            <div class="task-meta">
+                                <span class="priority-badge priority-{{ (task['priority'] or 'Medium')|lower }}">
+                                    {{ task['priority'] or 'Medium' }}
+                                </span>
+
+                                {% if task['due_date'] %}
+                                    <span class="due-date-badge {% if not task['completed'] and task['due_date'] < today %}overdue-badge{% endif %}">
+                                        📅 {{ task['due_date'] }}
+                                        {% if not task['completed'] and task['due_date'] < today %}
+                                            <strong class="overdue-text">(Overdue)</strong>
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="task-actions">
+                            {% if task["completed"] == 0 %}
+                                <a href="/complete/{{ task['id'] }}" class="btn btn-complete">Complete</a>
+                            {% else %}
+                                <a href="/toggle/{{ task['id'] }}" class="btn btn-undo">Undo</a>
+                            {% endif %}
+
+                            <a href="/edit/{{ task['id'] }}" class="btn btn-edit">Edit</a>
+                            <a href="/delete/{{ task['id'] }}" class="btn btn-delete" onclick="return confirm('Delete this task?')">Delete</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="card empty-card">
+                <p class="empty-message">
+                    {% if search or current_filter != 'all' %}
+                        No tasks match your search or filter criteria.
+                        <br><a href="/" class="clear-link">Clear filters and view all tasks</a>
+                    {% else %}
+                        No tasks yet. Add your first task above!
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
